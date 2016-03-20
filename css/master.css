@@ -1,0 +1,38 @@
+.team-tab {
+    /*padding: 4px;
+    margin: 8px;*/
+    width: 200px;
+    height: 80px;
+    box-shadow: 0 0 7px -3px black;
+}
+
+.team-tab > .team-number {
+    height: 80px;
+    width: 80px;
+    background-color: #ff00b0;
+    color: #fff;
+    text-align: center;
+    font-size: 35px;
+    font-family: monospace;
+}
+
+.main-content {
+    padding: 16px;
+}
+
+.main-header {
+    padding: 16px;
+    background-color: #ff00b0;
+    border-bottom: 4px solid #ee00a0;
+    color: #fff;
+    text-align: center;
+    font-size: 35px;
+    font-family: monospace;
+}
+
+.main-content {
+    transform:
+}
+
+.fixed { position: fixed; }
+.fullwidth { width: 100%; }

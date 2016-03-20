@@ -1,0 +1,23 @@
+{
+  "name": "scouting",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "frc-events-api": "0.0.0",
+    "jquery": "^2.2.2",
+    "mime-types": "^2.1.10",
+    "mongoose": "^4.4.8",
+    "ws": "^1.0.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-less": "^3.0.5",
+    "gulp-todo": "^4.1.0"
+  }
+}

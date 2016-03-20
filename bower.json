@@ -1,0 +1,26 @@
+{
+  "name": "scouting",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Xavil Pergis <max.duzen@gmail.com>"
+  ],
+  "license": "GPL-3.0",
+  "moduleType": [
+    "es6",
+    "node"
+  ],
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "less": "^2.6.1",
+    "jquery": "^2.2.2",
+    "jquery.cookie": "jquery-cookie#^1.4.1"
+  }
+}

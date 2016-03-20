@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title class="content-bind" bind="title"></title>
+        <link rel="stylesheet" href="/css/reset.css" charset="utf-8">
+        <link rel="stylesheet" href="/css/master.css" charset="utf-8">
+        <script src="js/jquery.min.js" charset="utf-8"></script>
+        <script src="js/jquery.cookie.js" charset="utf-8"></script>
+    </head>
+    <body>
+        <div class="header main-header fullwidth content-bind" bind="teamnumber">Team %%</div>
+        <div class="main-content">
+            <div class="content-bind bind-update" bind="foo"></div>
+            <div class="category-tab">
+                <div class="team-number content-bind" bind="category">
+                    %%
+                </div>
+                + / -
+            </div>
+            <button type="button" name="button" id="484p">484 +</button>
+            <button type="button" name="button" id="484m">484 -</button>
+        </div>
+        <!--
+            NOTE: Load this script after EVERYTHING
+            Because I'm lazy and don't want to use an event handler
+            on the <html> tag
+        -->
+        <script src="js/main.js" charset="utf-8"></script>
+    </body>
+</html>
