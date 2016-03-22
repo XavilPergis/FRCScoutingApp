@@ -14,6 +14,12 @@ let cid = undefined;
 var ws = new WebSocket('ws://localhost:3000');
 console.log(ws);
 
+// class DOMBinding {
+//     constructor(elem) {
+//         this.elem = elem;
+//     }
+// }
+
 function update() {
     let nl = document.getElementsByClassName('content-bind');
 
@@ -69,15 +75,30 @@ ws.onopen = () => {
 
 // ws.send('getcategories');
 
+/**
+ * A simple event-driven state machine.
+ * @class
+ */
 class StateMachine {
     constructor() {
         this.state = 'init';
         this._stateList = {};
     }
+
+    /**
+     * Add state handler
+     * @param {string} s - Which state `cb` should be fired on. Use `*` for all states.
+     * @param {function} cb - The function to call on the proper state defined in `s`
+     */
     state(s, cb) {
         this._stateList[s] = cb;
         return this;
     }
+
+    /**
+     * Triggers the firing of callbacks
+     * @param {object} res - The JSON response object parsed from WebSocket messages
+     */
     update(res) {
         for(let key of this._stateList) {
             if(this.state == s || s == '*') this._stateList[key](res);

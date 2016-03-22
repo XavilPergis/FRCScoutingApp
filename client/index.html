@@ -3,10 +3,10 @@
     <head>
         <meta charset="utf-8">
         <title class="content-bind" bind="title"></title>
-        <link rel="stylesheet" href="/css/reset.css" charset="utf-8">
-        <link rel="stylesheet" href="/css/master.css" charset="utf-8">
-        <script src="js/jquery.min.js" charset="utf-8"></script>
-        <script src="js/jquery.cookie.js" charset="utf-8"></script>
+        <link rel="stylesheet" href="build/reset.css" charset="utf-8">
+        <link rel="stylesheet" href="build/master.css" charset="utf-8">
+        <script src="build/jquery.js" charset="utf-8"></script>
+        <script src="build/jquery.cookie.js" charset="utf-8"></script>
     </head>
     <body>
         <div class="header main-header fullwidth content-bind" bind="teamnumber">Team %%</div>
@@ -18,8 +18,6 @@
                 </div>
                 + / -
             </div>
-            <button type="button" name="button" id="484p">484 +</button>
-            <button type="button" name="button" id="484m">484 -</button>
         </div>
         <!--
             NOTE: Load this script after EVERYTHING
@@ -27,5 +25,6 @@
             on the <html> tag
         -->
         <script src="js/main.js" charset="utf-8"></script>
+        <script src="js/dom.js" charset="utf-8"></script>
     </body>
 </html>

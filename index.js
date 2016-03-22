@@ -1,9 +1,14 @@
 'use strict';
 
 const fs = require('fs');
-const http = require('http');
-const crypto = require('crypto');
 const ws = require('ws');
+const http = require('http');
+const mime = require('mime-types');
+const path = require('path');
+const crypto = require('crypto');
+const exc = require('./exception');
+
+const IllegalArgumentException = exc.IllegalArgumentException;
 
 let states = {};
 let teams = [484];
@@ -11,14 +16,6 @@ let teams = [484];
 let categories = [
     'foo', 'bar', 'baz'
 ];
-
-// XXX PROTOTYPES XXX
-// Array.prototype.randomize = function(arr) {
-//     let _arr = [];
-//     _arr.push(arr.splice(Math.floor(Math.random() * this.length), 1));
-//     return _arr;
-// };
-// console.log(require('util').inspect(Array, { showHidden: true, depth: null }));
 
 function* counter() {
     let ct = 0;
@@ -40,6 +37,40 @@ function newId() {
 }
 
 */
+
+/**
+ * This class represents a single FRC Team. All paramaters are final upon construction.
+ * @param {string} name - The name of the team.
+ * @param {number} number - The team number.
+ * @param {string} alliance - The alliance the team is part of. Should be either red or blue
+ * @throws {IllegalArgumentException} `alliance` must be either `red` or `blue`
+ * @since 0.1.0
+ * @class
+ */
+class Team {
+    constructor(name, number, alliance) {
+        this.name = name;
+        this.number = number;
+        if(['red', 'blue'].indexOf(alliance) > -1) this.alliance = alliance;
+        else throw new IllegalArgumentException('`alliance` must be either "red" or "blue"');
+    }
+
+    /**
+     * @return {string} Get the team's name.
+     */
+    get name() { return this.name };
+
+    /**
+     * @return {number} Get the team's number.
+     */
+    get number() { return this.number; };
+
+    /**
+     * @return {string} Get the team's alliance.
+     */
+    get alliance() { return this.alliance };
+
+}
 
 let serv = http.createServer((req, res) => {
     if(req.url.indexOf('/api') == 0) {
@@ -70,8 +101,8 @@ let serv = http.createServer((req, res) => {
     } if(req.url.indexOf('/keepalive') == 0) {
         res.end('200 OK', 200);
     } else {
-        // console.log(__dirname + req.url);
-        fs.stat(__dirname + req.url, (err0, stat) => {
+        // console.log(__dirname + '/client' + req.url);
+        fs.stat(__dirname + '/client' + req.url, (err0, stat) => {
             if(err0) {
                 // console.error(err0);
                 res.writeHead(404, {'Content-Type': 'text/plain'});
@@ -81,16 +112,18 @@ let serv = http.createServer((req, res) => {
                 if(stat.isDirectory()) {
                     loc += 'index.html';
                 }
-                fs.readFile(__dirname + loc, (err, buf) => {
+                fs.readFile(__dirname + '/client' + loc, (err, buf) => {
                     if(err) {
                         // console.error(err);
                         res.writeHead(404, {'Content-Type': 'text/plain'});
                         res.end('404 NOT FOUND')
                     } else {
+                        let mt = mime.lookup(path.extname(loc)) || 'text/plain';
+                        res.writeHead(200, {'Content-Type': mt});
                         res.write(buf);
                         res.end();
                     }
-                    // console.log(res.statusCode + ' GET ' + __dirname + loc);
+                    // console.log(res.statusCode + ' GET ' + __dirname + '/client' + loc);
                 });
             }
         });
