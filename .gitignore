@@ -50,5 +50,8 @@ bower_components
 # MongoDB / data
 data
 
+# Documentation. generate with `gulp doc [--type (md|html|json)]`
+docs
+
 # Build directory
 build
