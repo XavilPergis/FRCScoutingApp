@@ -14,18 +14,11 @@ let cid = undefined;
 var ws = new WebSocket('ws://localhost:3000');
 console.log(ws);
 
-// class DOMBinding {
-//     constructor(elem) {
-//         this.elem = elem;
-//     }
-// }
-
 function update() {
     let nl = document.getElementsByClassName('content-bind');
 
     for(let n in nl) {
         let node = nl[n];
-        // console.log(node);
         for(let k in node.attributes) {
             if(node.attributes[k].name == 'bind') {
                 node.innerHTML = node.innerHTML.replace(/%%/gi, env[node.attributes[k].nodeValue]);
@@ -61,19 +54,9 @@ function getNewId() {
     xhr.send();
 }
 
-// function getCookies() {
-//     console.log($.cookie('foo'));
-// }
-
-document.getElementById('484p').addEventListener('click', e => {
-    console.log(document.cookie);
-});
-
 ws.onopen = () => {
     ws.send('ping');
 };
-
-// ws.send('getcategories');
 
 /**
  * A simple event-driven state machine.
@@ -141,7 +124,3 @@ ws.onmessage = msg => {
 
     sm.update(res);
 };
-
-// pushData({foo: 'bar'});
-// getCookies();
-// console.log(n);
