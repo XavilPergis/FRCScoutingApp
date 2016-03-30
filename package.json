@@ -9,10 +9,12 @@
   "author": "",
   "license": "GPL-3.0",
   "dependencies": {
+    "cookie": "^0.2.3",
     "frc-events-api": "0.0.0",
     "jquery": "^2.2.2",
     "mime-types": "^2.1.10",
     "mongoose": "^4.4.8",
+    "uuid": "^2.0.1",
     "ws": "^1.0.1"
   },
   "devDependencies": {
@@ -20,7 +22,6 @@
     "gulp": "^3.9.1",
     "gulp-documentation": "^2.2.0",
     "gulp-if": "^2.0.0",
-    "gulp-jshint": "^2.0.0",
     "gulp-less": "^3.0.5",
     "gulp-strip-debug": "^1.1.0",
     "gulp-todo": "^4.1.0",

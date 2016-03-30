@@ -66,7 +66,7 @@ gulp.task('server', () => {
     // Start new node server
     node = spawn('node', ['index.js'], { stdio: 'inherit' });
     node.on('close', (code) => {
-        if (code === 8) gulp.log('Error detected, waiting for changes...');
+        if(code === 8) gulp.log('Error detected, waiting for changes...');
     });
 });
 
