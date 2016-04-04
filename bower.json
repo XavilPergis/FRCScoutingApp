@@ -21,6 +21,9 @@
   "dependencies": {
     "less": "^2.6.1",
     "jquery": "^2.2.2",
-    "jquery.cookie": "jquery-cookie#^1.4.1"
+    "jquery.cookie": "jquery-cookie#^1.4.1",
+    "polymer": "Polymer/polymer#^1.4.0",
+    "iron-elements": "PolymerElements/iron-elements#^1.0.9",
+    "paper-elements": "PolymerElements/paper-elements#^1.0.7"
   }
 }

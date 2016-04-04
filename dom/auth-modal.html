@@ -1,0 +1,93 @@
+<link rel="import" href="../bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<dom-module id="auth-modal">
+
+    <template>
+        <paper-dialog modal class="am" id="main" entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+            <h2>Authentication</h2>
+            <div class="inp">
+                <paper-input id="name" label="Name"></paper-input>
+                <paper-input id="pass" label="Password" type="password"></paper-input>
+            </div>
+            <div class="actions">
+                <paper-button id="submit">Submit</paper-button>
+                <paper-button dialog-dismiss>Cancel</paper-button>
+            </div>
+        </paper-dialog>
+        <paper-toast id="invalid-toast" text="{{accepted}}">
+            <b>Incorrect password!</b>
+        </paper-toast>
+        <paper-toast id="valid-toast" text="{{accepted}}">
+            <b>Successfully Authenticated</b>
+        </paper-toast>
+    </template>
+
+    <style is="custom-style">
+        .am {
+            width: 70%;
+            padding: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            flex-grow: 2;
+        }
+        .inp paper-input {
+            width: 100%;
+        }
+        #submit {
+            font-weight: bold;
+        }
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            color: #3f51b5;
+        }
+        paper-button {
+            display: inline-block;
+            padding: 5px;
+        }
+        paper-input {
+            display: inline-block;
+            /*align-content: flex-end;*/
+        }
+    </style>
+
+    <script>
+    'use strict';
+    Polymer({
+        is: 'auth-modal',
+        listeners: {
+            'tap': 'tapHandler'
+        },
+        tapHandler: function(e) {
+            if(e.target === this.$['submit']) {
+                let ws = window.ws;
+
+                let name = this.$['name'].value;
+                let password = this.$['pass'].value;
+
+                ws.send(`auth::${name}::${password}`);
+
+                ws.onmessage = (msg) => {
+                    if(msg.data != 'auth::null') {
+                        // We got a valid response, woohoo!
+                        let parts = msg.data.split('::');
+                        $.cookie('sessid', parts[1], { expires: new Date(parts[2]) });
+                        this.$['main'].close();
+                        this.$['valid-toast'].open();
+                    } else {
+                        this.$['invalid-toast'].open();
+                    }
+                };
+
+            }
+        },
+        // Polymer does not like arrows :(
+        // RIP () => {}
+        ready: function() {
+            if(!$.cookie('sessid')) this.$['main'].open();
+        }
+    });
+    </script>
+
+</dom-module>

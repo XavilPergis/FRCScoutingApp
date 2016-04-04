@@ -8,13 +8,84 @@ const      uuid = require('uuid');
 const      path = require('path');
 const      http = require('http');
 const     teams = require('./teams');
+const     utils = require('./utils');
 const    cookie = require('cookie');
+const    FRCAPI = require('./frcapi');
 const sensitive = require('./sensitive');
 
 const IllegalArgumentException = exc.IllegalArgumentException;
 
+var fapi = new FRCAPI({ username: sensitive.username, auth: sensitive.password, season: 2016 });
+let timetable = {};
+let teamlist = [];
+
+let teamsavail = [];
+let teamsinuse = [];
+
+var scheduleRef = {};
+
+// MATCH LENGTH IS 150 SECONDS
+
+fapi.schedule({
+    eventCode: 'PAWCH',
+    tournamentLevel: 'qual'
+}, (data) => {
+    console.log(data);
+    scheduleRef = data;
+    let _teamtable = {};
+    for(let val of data.Schedule) {
+        timetable[val.matchNumber.toString()] = new Date(val.startTime);
+        for(let _val of val.Teams)
+            _teamtable[_val.teamNumber.toString()] = true;
+    }
+    for(let v in _teamtable) if(_teamtable.hasOwnProperty(v)) {
+        teamlist.push(v);
+    }
+    repopTeams();
+    // console.log(getCurrentRound(scheduleRef, timetable));
+    // console.log(timetable);
+    // console.log(teamlist);
+});
+
+let getCurrentRound = function(sch, tt) {
+    let round = -1;
+    for(let k in tt) {
+        // XXX: DO NOT KEEP THIS DATE STRING!!!
+        if(tt[k].valueOf() > new Date('Saturday, 02-Apr-16 14:33:00 UTC')) {
+            round = Number(k) - 1;
+            break;
+        }
+    }
+    if(round > -1) {
+        let m = sch.Schedule.filter(el => el.matchNumber == round)[0];
+        return m;
+    }
+}
+
+let useTeam = function(team) {
+    teamsavail = teamsavail.filter(el => el != team);
+    teamsinuse.push(team);
+    console.log(teamsinuse, teamsavail);
+};
+let freeTeam = function(team) {
+    teamsinuse = teamsinuse.filter(el => el != team);
+    teamsavail = teamsavail.push(team).sort();
+};
+let getRandomTeam = function() {
+    let rtn = teamsavail[Math.floor(Math.random() * teamsavail.length)]
+    if(rtn) useTeam(rtn);
+    return rtn;
+};
+let repopTeams = function() {
+    teamsavail = [];
+    teamsinuse = [];
+    for(let team of getCurrentRound(scheduleRef, timetable).Teams) {
+        teamsavail.push(team.teamNumber);
+    }
+}
+
+
 var sessions = {};
-var teamlist = [];
 
 /**
  * The default callback use in node http servers.
@@ -52,10 +123,11 @@ class Server {
 
     /**
      * Create a route.
+     * @flow
      * @param {string} url - When to use the callback.
      * @param {string[]} methods - The HTTP methods that can invoke the route.
      * @param {httpCallback} callback - The function to be called when a user accesses the specified url.<br>
-     * @param {force=} force - Force The route to be added. This WILL cause unexpected behaviour.
+     * @param {boolean=} force - Force The route to be added. This WILL cause unexpected behaviour.
      */
     route(url, methods, callback, force) {
         let valid = true;
@@ -78,7 +150,7 @@ const httpError = (sc, req, res) => {
     res.end(`${sc} ${http.STATUS_CODES[sc]}`);
 };
 
-let server = new Server({ port: 8080, log_requests: true }, (serv, err) => {
+let server = new Server({ port: 8080, log_requests: false }, (serv, err) => {
     if(err) throw err;
     console.log('Listening.');
 });
@@ -94,16 +166,16 @@ server.route('/api', ['POST'], (req, res) => {
 });
 
 server.route('/', ['GET'], (req, res) => {
-    let uri = __dirname + '/client' + req.url;
+    let uri = __dirname + req.url;
 
     // Any other request not handled goes here.
     // Basically a static fileserver
     fs.stat(uri, (err, stat) => {
-        if(err) httpError(404, req, res);
+        if(err) { httpError(404, req, res); return; }
         if(stat) {
             if(stat.isDirectory()) uri += 'index.html';
             fs.readFile(uri, (err, buf) => {
-                if(err) httpError(404, req, res);
+                if(err) { httpError(404, req, res); return; }
                 // If we don't know the MIME type, assume it is 'text/plain'
                 let mt = mime.lookup(path.extname(uri)) || 'text/plain';
                 let headerObj = {
@@ -117,39 +189,105 @@ server.route('/', ['GET'], (req, res) => {
     });
 });
 
-let wss = new ws.Server({ host: 'localhost', port: '3000' }, () => {
-    console.log('WS\tServer Started');
+// let wss = new ws.Server({ host: 'localhost', port: '3000' }, () => {
+//     console.log('WS\tServer Started');
+// });
+
+// Very similar to Server! Might be able to fix.
+class WebSocketServer {
+    constructor(opts, wss) {
+        this.opts = opts;
+        this.ehl = [];
+
+        // SERVER INIT ---------------------------------------------------------
+        // Create a server if none is provided
+        if(!wss) wss = new ws.Server({
+            host: opts.host || 'localhost',
+            port: opts.port || '3000'
+        }, () => {
+            if(opts.logger_enabled) console.log('WS\tServer Started');
+        });
+
+        // SERVER PROTOTYPES ---------------------------------------------------
+        wss.broadcast = function(data) {
+            wss.clients.forEach((cli) => {
+                cli.send(data);
+            });
+        };
+
+        wss.on('connection', (ws) => {
+            // CLIENT PROTOTYPES -----------------------------------------------
+            ws._emit = function(chan, data) {
+                let _data = data ? `::${data}` : '::__NODATA';
+                if(opts.logger_enabled) console.log(`WS <--\t${chan}\t${data}`);
+                ws.send(`${chan}${_data}`);
+            }
+
+            ws._lastKeepAlive = -1;
+
+            ws.on('message', (msg, raw) => {
+                let chan = msg.split('::')[0];
+                let parts = msg.split('::').slice(1);
+                if(opts.logger_enabled) console.log(`WS -->\t${chan}\t[ ${parts.join(', ')} ]`);
+                for(let ch of this.ehl) if(ch.name === chan)
+                    ch.cb(parts, ws, raw);
+            });
+            ws.on('close', (code, message) => {
+                console.log(code, message);
+            });
+
+            this.on('ka', (parts, ws, raw) => {
+                let tn = Number(parts[0]);
+            });
+            // Keepalive every ten seconds
+            setInterval(() => {
+                ws._emit('ka');
+                ws._lastKeepAlive = Date.now();
+                // Four seconds for a timeout
+                setTimeout(() => {
+
+                }, 4000);
+            }, 10000);
+        });
+    }
+    on(name, cb) {
+        this.ehl.push({ name: name, cb: cb });
+    }
+}
+
+let wss = new WebSocketServer({ logger_enabled: true });
+
+// Each call to `on` will listen for ANY client that sends the message and will
+// provide the sender in `ws`
+
+wss.on('auth', (parts, ws, raw) => {
+    // Time-based uuid generator. Less secure, but does it really matter?
+    var ssid = uuid.v1();
+    // Get the UTC string for 24 hours in the future.
+    // This is when our session cookie will expire.
+    var sexp = new Date(new Date().setHours(new Date().getHours() + 24)).toUTCString();
+    if(sensitive.server_password === parts[1]) {
+        sessions[ssid] = new Date(sexp);
+        ws._emit('auth', `${ssid}::${sexp}`);
+    } else ws._emit('auth');
+});
+wss.on('team', (parts, ws, raw) => {
+    ws._emit('team', getRandomTeam());
+});
+wss.on('match', (parts, ws, raw) => {
+    // May be a bit buggy due to asyncronisity...
+    let foo = getCurrentRound(scheduleRef, timetable);
+    ws._emit('match', JSON.stringify(foo));
+});
+wss.on('ping', (parts, ws) => {
+
 });
 
-wss.on('connection', ws => {
-    ws.on('message', (msg, raw) => {
-        // Get the first bit of the message. This will be what the message means
-        let chan = msg.split('::')[0];
-        let parts = msg.split('::').slice(1);
-        let fullmsg = parts.join('::');
-        console.log(`WS\t${chan}\t[ ${parts.join(', ')} ]`);
-        switch(chan) {
-            case 'auth':
-                // Time-based uuid generator. Less secure, but does it really matter?
-                var ssid = uuid.v1();
-                // Get the UTC string for 24 hours in the future.
-                // This is when our session cookie will expire.
-                var sexp = new Date(new Date().setHours(new Date().getHours() + 24)).toUTCString();
-                if(sensitive.server_password === fullmsg) {
-                    sessions[ssid] = new Date(sexp);
-                    ws.send(`auth::${ssid}::${sexp}`);
-                } else ws.send('auth::null');
-                break;
-            case 'ping':
-                ws.send('ping::ack');
-                break;
-            case 'team':
-                if(parts[0] === 'get') {
-                    ws.send('team::jdsgljgsdlgjkdasjfkjadkjg');
-                }
-                break;
-            default:
-                console.log('WS\tUnknown message from client.');
-        }
-    });
-});
+setInterval(() => {
+    // Simple session management
+    for(let k in sessions) if(sessions[k].valueOf() >= Date.now()) delete sessions[k];
+}, 1000);
+
+// Track crossings
+// Defenses:
+//

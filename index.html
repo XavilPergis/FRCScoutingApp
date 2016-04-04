@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title class="content-bind" bind="title"></title>
+
+        <!-- Mobile -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Chrome / Android -->
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="theme-color" content="black">
+        <link rel="icon" href="icon.png">
+
+        <!-- Safari / iOS -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
+
+        <!-- <script src="bower_components/polymer/polymer.js" charset="utf-8"></script> -->
+        <link rel="import" href="bower_components/polymer/polymer.html">
+        <script src="build/babel/wsc.js" charset="utf-8"></script>
+        <script src="build/babel/main.js" charset="utf-8"></script>
+
+        <!-- Polymer Elements -->
+        <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+        <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+        <link rel="import" href="bower_components/paper-dialog/paper-dialog.html">
+        <link rel="import" href="bower_components/paper-input/paper-input.html">
+        <link rel="import" href="bower_components/paper-button/paper-button.html">
+        <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+        <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+        <link rel="import" href="bower_components/iron-pages/iron-pages.html">
+        <link rel="import" href="bower_components/paper-styles/default-theme.html">
+        <link rel="import" href="bower_components/paper-styles/color.html">
+
+        <!-- Custom DOM Modules -->
+        <link rel="import" href="dom/team-toolbar.html">
+        <link rel="import" href="dom/match-progress.html">
+        <link rel="import" href="dom/auth-modal.html">
+        <link rel="import" href="dom/scouting-buttons.html">
+
+        <!-- CSS Reset -->
+        <link rel="stylesheet" href="build/css/reset.css" charset="utf-8">
+
+        <!-- JS Libraries -->
+        <script src="bower_components/jquery/dist/jquery.js" charset="utf-8"></script>
+        <script src="bower_components/jquery.cookie/jquery.cookie.js" charset="utf-8"></script>
+
+        <script>
+            window.addEventListener('WebComponentsReady', function() {
+                console.log('hi');
+                var scope = document.querySelector("template#scope");
+                scope.number = 1; // display the number 1
+            });
+        </script>
+
+        <style is="custom-style">
+            iron-pages > * {
+                margin: 16px;
+            }
+            paper-tabs {
+                --paper-tabs-selection-bar-color: var(--paper-yellow-300);
+                --paper-tabs: {
+                    background-color: var(--paper-light-blue-500);
+                    color: white;
+                }
+            }
+            #toolbar paper-toolbar {
+                background-color: var(--paper-light-blue-500);
+            }
+            #toolbar paper-button {
+                display: inline-block;
+                height: 55px;
+                padding: 5px;
+            }
+            #toolbar paper-dialog {
+                width: 70%;
+                padding: 0;
+            }
+            #toolbar paper-dialog > match-progress {
+                padding: 0;
+            }
+            #toolbar match-progress paper-progress {
+                margin: -16px;
+            }
+            #toolbar paper-dialog .wrapper {
+                display: flex;
+                flex-wrap: wrap;
+                margin: 20px;
+            }
+            #toolbar .content {
+                flex-grow: 3;
+                margin: auto 0;
+            }
+            #toolbar .actions {
+                display: flex;
+                align-self: flex-end;
+                justify-content: flex-end;
+                vertical-align: middle;
+                width: 100%;
+                color: #3f51b5;
+            }
+            #toolbar .actions paper-button {
+                height: auto;
+                align-self: flex-end;
+            }
+        </style>
+    </head>
+    <body>
+        <auth-modal id="login-modal"></auth-modal>
+        <team-toolbar></team-toolbar>
+        <template is="dom-bind" id="scope">
+            <div class="content">
+                <paper-tabs autoselect selected="{{selected}}">
+                    <paper-tab>Scouting</paper-tab>
+                    <paper-tab>Data</paper-tab>
+                </paper-tabs>
+            </div>
+            <iron-pages selected="{{selected}}">
+                <div class="">
+                    <match-progress></match-progress>
+                    foo
+                </div>
+                <div class="">
+                    bar
+                </div>
+            </iron-pages>
+        </template>
+        <match-display></match-display>
+        <scouting-buttons></scouting-buttons>
+    </body>
+</html>

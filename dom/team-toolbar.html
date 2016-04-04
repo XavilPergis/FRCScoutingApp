@@ -1,0 +1,97 @@
+<link rel="import" href="../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="match-progress.html">
+
+<dom-module id="team-toolbar">
+
+    <template>
+        <paper-toolbar>
+            <paper-icon-button icon="menu" on-tap="menuAction"></paper-icon-button>
+            <div class="title">{{team}}</div>
+            <paper-icon-button icon="more-vert" on-tap="moreAction"></paper-icon-button>
+        </paper-toolbar>
+        <paper-dialog id="notif0" entry-animation="fade-in-animation" exit-animation="fade-out-animation">
+            <div class="wrapper">
+                <div class="content">
+                    <h2>No more teams available!</h2>
+                    <p>Please try again next match</p>
+                </div>
+                <div class="actions">
+                    <paper-button dialog-confirm>OK</paper-button>
+                </div>
+            </div>
+            <match-progress></match-progress>
+        </paper-dialog>
+    </template>
+
+    <style is="custom-style">
+        paper-toolbar {
+            background-color: var(--paper-light-blue-500);
+        }
+        paper-button {
+            display: inline-block;
+            height: 55px;
+            padding: 5px;
+        }
+        paper-dialog {
+            width: 70%;
+            padding: 0;
+        }
+        paper-dialog > match-progress {
+            padding: 0;
+        }
+        match-progress paper-progress {
+            margin: -16px;
+        }
+        paper-dialog .wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 20px;
+        }
+        .content {
+            flex-grow: 3;
+            margin: auto 0;
+        }
+        .actions {
+            display: flex;
+            align-self: flex-end;
+            justify-content: flex-end;
+            vertical-align: middle;
+            width: 100%;
+            color: #3f51b5;
+        }
+        .actions paper-button {
+            height: auto;
+            align-self: flex-end;
+        }
+    </style>
+
+    <script>
+    Polymer({
+        is: 'team-toolbar',
+        properties: {
+            'team': {
+                type: String,
+                value: ''
+            },
+            'teamname': {
+                type: String,
+                value: ''
+            }
+        },
+        menuAction: function() {},
+        moreAction: function() {},
+        ready: function() {
+            window.wsc.emit('team');
+            window.wsc.on('team', (parts, ws, raw) => {
+                console.log(parts);
+                if(parts[0] !== '__NODATA') this.team = 'Team ' + parts[0];
+                else {
+                    this.team = 'No Team'
+                    this.$['notif0'].open();
+                }
+            });
+        }
+    });
+    </script>
+
+</dom-module>

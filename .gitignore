@@ -52,4 +52,5 @@ docs
 # Build directory
 build
 
-ssl
+# A bunch of sensitive data :)
+sensitive*

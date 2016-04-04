@@ -1,0 +1,69 @@
+<link rel="import" href="../bower_components/paper-progress/paper-progress.html">
+
+<dom-module id="match-progress">
+
+    <template>
+        <paper-progress min="{{mmin}}" max="{{mmax}}" value="{{matchprog}}" secondary-progress="{{autot}}"></paper-progress>
+        <paper-toast id="finished-toast" text="">
+            <b>Match finished!</b>
+        </paper-toast>
+        <paper-toast id="auto-finished-toast" text="">
+            <b>Autonomous mode finished!</b>
+        </paper-toast>
+    </template>
+
+    <style is="custom-style">
+    paper-progress {
+        display: block;
+        width: 100%;
+        --paper-progress-active-color: var(--paper-light-blue-600);
+        --paper-progress-secondary-color: var(--paper-light-blue-100);
+        --paper-progress-height: 8px;
+    }
+    </style>
+
+    <script>
+    Polymer({
+        is: 'match-progress',
+        properties: {
+            'matchprog': {
+                type: Number,
+                value: 0
+            },
+            'autot': {
+                type: Number,
+                value: 0
+            }
+        },
+        ready: function() {
+            this.timer.call(this);
+        },
+        timer: function() {
+            window.wsc.emit('match');
+            window.wsc.on('match', (parts, ws, raw) => {
+                let json = parts.join('::');
+                let match = JSON.parse(json);
+
+                this._startTime = Date.now();
+                this.mmin = (new Date(match.startTime)).valueOf();
+                // 2m 30s long match
+                this.mmax = this.mmin + (1000 * 150);
+                // 15s long autonomous period
+                this.autot = this.mmin + (1000 * 15);
+
+                let ih = setInterval(() => {
+                    let timeDelta = Date.now() - this._startTime
+                    this.matchprog = (new Date(match.startTime)).valueOf() + timeDelta;
+                    if(this.matchprog >= this.mmax) {
+                        // Open toast and stop the counter
+                        this.$['finished-toast'].open();
+                        clearInterval(ih);
+                    }
+                    if(this.matchprog >= this.autot && this.matchprog <= this.autot + 100) this.$['auto-finished-toast'].open();
+                }, 1);
+            });
+        }
+    });
+    </script>
+
+</dom-module>
