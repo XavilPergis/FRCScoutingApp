@@ -1,4 +1,5 @@
 'use strict';
+
 const http = require('http');
 const https = require('https');
 const querystring = require('querystring');
@@ -6,13 +7,9 @@ const request = require('request');
 const sensitive = require('./sensitive');
 const utils = require('./utils');
 
-// https://frc-api.firstinspires.org/v2.0/$SEASON/
-
 var API = class {
     constructor(opts) {
-        if(!opts.username || !opts.auth) {
-            throw new Error('Required parameter not supplied!')
-        }
+        if(!opts.username || !opts.auth) throw new Error('Required parameter not supplied!');
         this._username = opts.username;
         this._authkey = (new Buffer(`${opts.username}:${opts.auth}`)).toString('base64');
         this._defaultRequest = {
@@ -198,13 +195,5 @@ class Options {
         return this;
     };
 }
-
-// var foo = new API({ username: sensitive.username, auth: sensitive.password, season: 2016 });
-// foo.rankings({
-//     eventCode: 'PAWCH',
-//
-// }, (data) => {
-//     console.log(data);
-// });
 
 module.exports = API;

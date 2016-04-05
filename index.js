@@ -7,7 +7,7 @@ const      mime = require('mime-types');
 const      uuid = require('uuid');
 const      path = require('path');
 const      http = require('http');
-const     teams = require('./teams');
+const      Team = require('./teams');
 const     utils = require('./utils');
 const    cookie = require('cookie');
 const    FRCAPI = require('./frcapi');
@@ -15,12 +15,14 @@ const sensitive = require('./sensitive');
 
 const IllegalArgumentException = exc.IllegalArgumentException;
 
-var fapi = new FRCAPI({ username: sensitive.username, auth: sensitive.password, season: 2016 });
+var globals = require('./globals');
+
+globals.env['FRC_API'] = new FRCAPI({ username: sensitive.username, auth: sensitive.password, season: 2016 });
+globals.env['EVENT_CODE'] = 'PAWCH';
+
+let fapi = process.env['FRC_API'];
 let timetable = {};
 let teamlist = [];
-
-let teamsavail = [];
-let teamsinuse = [];
 
 var scheduleRef = {};
 
@@ -41,10 +43,6 @@ fapi.schedule({
     for(let v in _teamtable) if(_teamtable.hasOwnProperty(v)) {
         teamlist.push(v);
     }
-    repopTeams();
-    // console.log(getCurrentRound(scheduleRef, timetable));
-    // console.log(timetable);
-    // console.log(teamlist);
 });
 
 let getCurrentRound = function(sch, tt) {
@@ -61,29 +59,6 @@ let getCurrentRound = function(sch, tt) {
         return m;
     }
 }
-
-let useTeam = function(team) {
-    teamsavail = teamsavail.filter(el => el != team);
-    teamsinuse.push(team);
-    console.log(teamsinuse, teamsavail);
-};
-let freeTeam = function(team) {
-    teamsinuse = teamsinuse.filter(el => el != team);
-    teamsavail = teamsavail.push(team).sort();
-};
-let getRandomTeam = function() {
-    let rtn = teamsavail[Math.floor(Math.random() * teamsavail.length)]
-    if(rtn) useTeam(rtn);
-    return rtn;
-};
-let repopTeams = function() {
-    teamsavail = [];
-    teamsinuse = [];
-    for(let team of getCurrentRound(scheduleRef, timetable).Teams) {
-        teamsavail.push(team.teamNumber);
-    }
-}
-
 
 var sessions = {};
 
@@ -150,7 +125,7 @@ const httpError = (sc, req, res) => {
     res.end(`${sc} ${http.STATUS_CODES[sc]}`);
 };
 
-let server = new Server({ port: 8080, log_requests: false }, (serv, err) => {
+let server = new Server({ port: 8080, log_requests: true }, (serv, err) => {
     if(err) throw err;
     console.log('Listening.');
 });

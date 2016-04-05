@@ -1,6 +1,17 @@
+/** @module Team */
 'use strict';
 
-const FRCApi = require('frc-events-api');
+const FRCAPI = require('./frcapi');
+const sensitive = require('./sensitive');
+const TeamInUseException = require('./exception').TeamInUseException;
+
+var globals = require('./globals');
+
+let _teamsInUse = [];
+let _teamsAvailable = [];
+// let _api = globals.env['FRC_API'];
+globals.env['EVENT_CODE'] = 'PAWCH';
+let _api = new FRCAPI({ username: sensitive.username, auth: sensitive.password, season: 2016 });
 
 /**
  * This class represents a single FRC Team. All paramaters are final upon construction.
@@ -13,31 +24,115 @@ const FRCApi = require('frc-events-api');
  */
 class Team {
     constructor(number, name, alliance) {
-        this.name = name;
-        this.number = number;
-        if(['red', 'blue'].indexOf(alliance) > -1) this.alliance = alliance;
+        this._name = name;
+        this._number = number;
+        this._inuse = false;
+        if(['red', 'blue'].indexOf(alliance) > -1) this._alliance = alliance;
         else throw new IllegalArgumentException('`alliance` must be either "red" or "blue"');
+
+        // Init static properties
+        if(!Team._teamsInUse) Team._teamsInUse = [];
+        if(!Team._teamsAvailable) Team._teamsAvailable = [];
+        if(!Team._teamList) Team._teamList = [];
+
+        // Push to list of all available teams if the team is not already listed
+        // This prevents teams being listed twice
+        let vaild = true;
+        for(let team of this._teamsAvailable) valid &= team.name != this._name || team.number != this._number;
+
+        if(Team._teamsAvailable && valid) Team._teamsAvailable.push(this);
+        if(Team._teamList) Team._teamList.push(this);
     }
 
     /**
      * @return {string} Get the team's name.
+     * @since 0.1.0
      */
-    get name() { return this.name };
+    get name() { return this._name };
 
     /**
      * @return {number} Get the team's number.
+     * @since 0.1.0
      */
-    get number() { return this.number; };
+    get number() { return this._number; };
 
     /**
      * @return {string} Get the team's alliance.
+     * @since 0.1.0
      */
-    get alliance() { return this.alliance };
+    get alliance() { return this._alliance };
 
-    static get FRCTeams() {
-        let tl = [
-            new Team(484, 'Roboforce', 'blue'),
-        ]
+    /**
+     * Add to the list of teams currently in use
+     * @throws {TeamInUseException} Team must be freed to use it.
+     * @since 0.1.0
+     */
+    use() {
+        if(!this._inuse) {
+            this._inuse = true;
+            Team._teamsInUse.push(this);
+            Team._teamsAvailable = Team._teamsAvailable.filter(t => t === this);
+        }
+        else throw new TeamInUseException(`Team ${this.number} already in use!`);
     }
 
+    /**
+     * Free the team for consumption.
+     * @since 0.1.0
+     */
+    free() {
+        if(this._inuse) {
+            this._inuse = false;
+            Team._teamsInUse = Team._teamsInUse.filter(t => t === this);
+        }
+        else console.warn('Team freed but was not in use.');
+    }
+
+    /**
+     * Returns a random team from the team registry.
+     * @return {Team} - A random registered team
+     * @since 0.1.0
+     * @static
+     */
+    static getRandom() {
+        let rn = Math.floor(Math.random() * Team._teamsAvailable.length);
+        let slt = Team._teamsAvailable[rn];
+        if(slt) {
+            slt.use();
+            return Team._teamsAvailable[rn];
+        } else console.warn('No more teams available.');
+    }
+
+    static repopTeams() {
+        for(let team of Team._teamsInUse) team.free();
+    }
+
+    /**
+    * Gets a list of all teams.
+    * @return {Team[]} List of all teams.
+    * @since 0.1.0
+    * @static
+    */
+    static getAllTeams() {
+        if(!Team._cached) {
+            Team._cached = [];
+            _api.teamListing({
+                eventCode: globals.env['EVENT_CODE']
+            }, (data) => {
+                for(let t of data.teams) {
+                    // FIXME: AH!!! EVERYONE IS RED.
+                    Team._cached.push(new Team(t.nameShort, t.teamNumber, 'red'));
+                }
+            });
+        } else {
+            let tl = [];
+            for(let t of this._teamList) tl.push(t);
+            return tl;
+        }
+    }
 }
+
+let tl = Team.getAllTeams();
+console.log(tl);
+
+module.exports = Team;
