@@ -52,64 +52,71 @@ var API = class {
     }
     alliances(opts, cb) {
         opts.requires(['eventCode']);
-        this._request(`alliances/${opts.eventCode}`, null, cb);
+        this._request(`alliances/${opts.get('eventCode')}`, null, cb);
     }
     awards(opts, cb) {
+        opts = new Options(opts);
         opts.requiresAny(['eventCode', 'teamNumber'])
         let bs = 'awards/';
-        if(!!opts.eventCode) bs += opts.eventCode.toString() + '/';
-        if(!!opts.teamNumber) bs += opts.teamNumber.toString() + '/';
+        if(!!opts.eventCode) bs += opts.get('eventCode').toString() + '/';
+        if(!!opts.teamNumber) bs += opts.get('teamNumber').toString() + '/';
         this._request(bs, null, cb);
     }
     awardsList(cb) {
         this._request('awards/list');
     }
     matchResults(opts, cb) {
+        opts = new Options(opts);
         opts.requiresIfAny(['tournamentLevel'], ['matchNumber', 'start', 'end']);
         opts.rejectsIfAny(['matchNumber'], ['teamNumber']);
         opts.rejectsIfAny(['start', 'end'], ['matchNumber']);
-        this._request(`matches/${opts.eventCode}`, {
-            tournamentLevel: opts.tournamentLevel,
-            matchNumber: opts.matchNumber,
-            teamNumber: opts.teamNumber,
-            start: opts.start,
-            end: opts.end
+        this._request(`matches/${opts.get('eventCode')}`, {
+            tournamentLevel: opts.get('tournamentLevel'),
+            matchNumber: opts.get('matchNumber'),
+            teamNumber: opts.get('teamNumber'),
+            start: opts.get('start'),
+            end: opts.get('end')
         }, cb);
 
     }
     matchScoreDetails(opts, cb) {
+        opts = new Options(opts);
         opts.requires(['eventCode', 'tournamentLevel']);
-        this._request(`matches/${opts.eventCode}`, {
-            tournamentLevel: opts.tournamentLevel
+        this._request(`matches/${opts.get('eventCode')}`, {
+            tournamentLevel: opts.get('tournamentLevel')
         }, cb);
     }
     rankings(opts, cb) {
+        opts = new Options(opts);
         opts.requires(['eventCode']);
         opts.rejectsIfAny(['teamNumber'], ['top']);
-        this._request(`rankings/${opts.eventCode}`, {
-            teamNumber: opts.teamNumber,
-            top: opts.top
+        this._request(`rankings/${opts.get('eventCode')}`, {
+            teamNumber: opts.get('teamNumber'),
+            top: opts.get('top')
         }, cb);
     }
     schedule(opts, cb) {
+        opts = new Options(opts);
         opts.requires(['eventCode']);
         opts.requiresAny(['teamNumber', 'tournamentLevel']);
-        this._request(`schedule/${opts.eventCode}`, {
-            tournamentLevel: opts.tournamentLevel,
-            teamNumber: opts.teamNumber,
-            start: opts.start,
-            end: opts.end
+        this._request(`schedule/${opts.get('eventCode')}`, {
+            tournamentLevel: opts.get('tournamentLevel'),
+            teamNumber: opts.get('teamNumber'),
+            start: opts.get('start'),
+            end: opts.get('end')
         }, cb);
     }
     hybrid(opts, cb) {
+        opts = new Options(opts);
         opts.requires(['eventCode', 'tournamentLevel']);
-        this._request(`schedule/${opts.eventCode}/${opts.tournamentLevel}/hybrid`, {
-            teamNumber: opts.teamNumber,
-            start: opts.start,
-            end: opts.end
+        this._request(`schedule/${opts.get('eventCode')}/${opts.get('tournamentLevel')}/hybrid`, {
+            teamNumber: opts.get('teamNumber'),
+            start: opts.get('start'),
+            end: opts.get('end')
         }, cb);
     }
     seasonSummary(cb) {
+        opts = new Options(opts);
         this._request('', null, cb);
     }
     eventListing(opts, cb) {
@@ -142,7 +149,7 @@ class Options {
     get(prop) {
         return this.opts[prop.toString()] || null;
     }
-    requires = function(req) {
+    requires(req) {
         let fl = req.filter((el, idx) => {
             return Object.keys(this.opts).indexOf(el) > -1;
         });
@@ -150,7 +157,7 @@ class Options {
         return this;
     };
 
-    requiresAny = function(req) {
+    requiresAny(req) {
         let valid = false;
         req.forEach((el) => {
             if(Object.keys(this.opts).indexOf(el) > -1) valid = true;
@@ -159,7 +166,7 @@ class Options {
         return this;
     };
 
-    requiresIfAny = function(req, l) {
+    requiresIfAny(req, l) {
         l.forEach((el) => {
             if(Object.keys(this.opts).indexOf(el) > -1)
                 if(!this.opts[req]) throw new Error(`Missing required parameter: ${req}!`);
@@ -167,7 +174,7 @@ class Options {
         return this;
     };
 
-    rejectsIfAny = function(rej, l) {
+    rejectsIfAny(rej, l) {
         l.forEach((el) => {
             if(Object.keys(this.opts).indexOf(el) > -1)
                 if(this.opts[rej]) throw new Error(`Cannot use parameter: ${rej}!`);
@@ -175,7 +182,7 @@ class Options {
         return this;
     };
 
-    requiresIfAll = function(req, l) {
+    requiresIfAll(req, l) {
         let fl = l.filter((el, idx) => {
             return !(Object.keys(this.opts).indexOf(el) > -1);
         });
@@ -183,7 +190,7 @@ class Options {
         return this;
     };
 
-    rejectsIfAll = function(rej, l) {
+    rejectsIfAll(rej, l) {
         let fl = l.filter((el, idx) => {
             return !(Object.keys(this.opts).indexOf(el) > -1);
         });
@@ -192,12 +199,12 @@ class Options {
     };
 }
 
-var foo = new API({ username: sensitive.username, auth: sensitive.password, season: 2016 });
-foo.rankings({
-    eventCode: 'PAWCH',
-
-}, (data) => {
-    console.log(data);
-});
+// var foo = new API({ username: sensitive.username, auth: sensitive.password, season: 2016 });
+// foo.rankings({
+//     eventCode: 'PAWCH',
+//
+// }, (data) => {
+//     console.log(data);
+// });
 
 module.exports = API;
