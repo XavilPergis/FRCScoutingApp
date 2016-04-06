@@ -1,6 +1,7 @@
 /** @module Team */
 'use strict';
 
+const async = require('async');
 const FRCAPI = require('./frcapi');
 const sensitive = require('./sensitive');
 const TeamInUseException = require('./exception').TeamInUseException;
@@ -9,9 +10,7 @@ var globals = require('./globals');
 
 let _teamsInUse = [];
 let _teamsAvailable = [];
-// let _api = globals.env['FRC_API'];
-globals.env['EVENT_CODE'] = 'PAWCH';
-let _api = new FRCAPI({ username: sensitive.username, auth: sensitive.password, season: 2016 });
+let _api = globals.env['FRC_API'];
 
 /**
  * This class represents a single FRC Team. All paramaters are final upon construction.
@@ -26,9 +25,8 @@ class Team {
     constructor(number, name, alliance) {
         this._name = name;
         this._number = number;
+        this._alliance = alliance;
         this._inuse = false;
-        if(['red', 'blue'].indexOf(alliance) > -1) this._alliance = alliance;
-        else throw new IllegalArgumentException('`alliance` must be either "red" or "blue"');
 
         // Init static properties
         if(!Team._teamsInUse) Team._teamsInUse = [];
@@ -37,8 +35,8 @@ class Team {
 
         // Push to list of all available teams if the team is not already listed
         // This prevents teams being listed twice
-        let vaild = true;
-        for(let team of this._teamsAvailable) valid &= team.name != this._name || team.number != this._number;
+        let valid = true;
+        for(let team of Team._teamsAvailable) valid &= team.name != this._name || team.number != this._number;
 
         if(Team._teamsAvailable && valid) Team._teamsAvailable.push(this);
         if(Team._teamList) Team._teamList.push(this);
@@ -71,7 +69,7 @@ class Team {
         if(!this._inuse) {
             this._inuse = true;
             Team._teamsInUse.push(this);
-            Team._teamsAvailable = Team._teamsAvailable.filter(t => t === this);
+            Team._teamsAvailable = Team._teamsAvailable.filter(t => t !== this);
         }
         else throw new TeamInUseException(`Team ${this.number} already in use!`);
     }
@@ -83,7 +81,7 @@ class Team {
     free() {
         if(this._inuse) {
             this._inuse = false;
-            Team._teamsInUse = Team._teamsInUse.filter(t => t === this);
+            Team._teamsInUse = Team._teamsInUse.filter(t => t !== this);
         }
         else console.warn('Team freed but was not in use.');
     }
@@ -99,7 +97,7 @@ class Team {
         let slt = Team._teamsAvailable[rn];
         if(slt) {
             slt.use();
-            return Team._teamsAvailable[rn];
+            return slt;
         } else console.warn('No more teams available.');
     }
 
@@ -113,26 +111,27 @@ class Team {
     * @since 0.1.0
     * @static
     */
-    static getAllTeams() {
+    static getAllTeams(cb) {
         if(!Team._cached) {
             Team._cached = [];
             _api.teamListing({
                 eventCode: globals.env['EVENT_CODE']
             }, (data) => {
+                // console.log(data);
                 for(let t of data.teams) {
                     // FIXME: AH!!! EVERYONE IS RED.
-                    Team._cached.push(new Team(t.nameShort, t.teamNumber, 'red'));
+                    let team = new Team(t.nameShort, t.teamNumber, 'red');
+                    // console.log(team);
+                    Team._cached.push(team);
                 }
+                cb(Team._cached);
             });
         } else {
             let tl = [];
-            for(let t of this._teamList) tl.push(t);
-            return tl;
+            for(let t of this._cached) tl.push(t);
+            cb(tl);
         }
     }
 }
-
-let tl = Team.getAllTeams();
-console.log(tl);
 
 module.exports = Team;
