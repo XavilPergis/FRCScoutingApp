@@ -1,12 +1,11 @@
-/** @module Team */
 'use strict';
 
-const async = require('async');
+// const async = require('async');
 const FRCAPI = require('./frcapi');
 const sensitive = require('./sensitive');
 const TeamInUseException = require('./exception').TeamInUseException;
 
-var globals = require('./globals');
+let globals = require('./globals');
 
 let _teamsInUse = [];
 let _teamsAvailable = [];

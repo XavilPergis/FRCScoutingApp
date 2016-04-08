@@ -177,6 +177,8 @@ class Server {
                 // Make sure the url specified is at the root
                 if(req.url.indexOf(route.url) === 0 && valid_method) {
                     route.callback(req, res);
+                    // Automatically handle closing the request
+                    res.end();
                     // We found what we want, don't allow anything else
                     break;
                 }
@@ -214,7 +216,7 @@ class Server {
 
 const httpError = (sc, req, res) => {
     res.writeHead(sc, {'Content-Type': 'text/plain'});
-    res.end(`${sc} ${http.STATUS_CODES[sc]}`);
+    res.write(`${sc} ${http.STATUS_CODES[sc]}`);
 };
 
 let server = new Server({ port: 8080, log_requests: true }, (serv, err) => {
@@ -227,9 +229,15 @@ server.route('/api', ['GET'], (req, res) => {
     res.end('Not Yet Implemented');
 });
 
-server.route('/api', ['POST'], (req, res) => {
-    console.log('API POST');
-    res.end('Not Yet Implemented');
+server.route('/api/data', ['POST'], (req, res) => {
+    let jso = {};
+    try {
+        jso = JSON.parse(req.data);
+    } catch(e) {
+        httpError(400, req, res);
+    }
+
+    writeToDB();
 });
 
 server.route('/', ['GET'], (req, res) => {
@@ -250,7 +258,6 @@ server.route('/', ['GET'], (req, res) => {
                 };
                 res.writeHead(200, headerObj);
                 res.write(buf);
-                res.end();
             });
         }
     });
