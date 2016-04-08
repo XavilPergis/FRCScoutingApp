@@ -31,10 +31,9 @@ var API = class {
         });
         let qs = querystring.stringify(_qso);
         if(qs) qs = '?' + qs;
-        let req = this._defaultRequest.extend({
-            path: `/${this.version}/${this.season}/${loc}${qs}`
-        });
-        console.log(req);
+        let req = Object.assign({}, this._defaultRequest);
+        req.path = `/${this.version}/${this.season}/${loc}${qs}`;
+        // console.log(req);
         https.get(req, (res) => {
             let finalData = new Buffer('');
             res.on('data', (chunk) => {
@@ -55,8 +54,8 @@ var API = class {
         opts = new Options(opts);
         opts.requiresAny(['eventCode', 'teamNumber'])
         let bs = 'awards/';
-        if(!!opts.eventCode) bs += opts.get('eventCode').toString() + '/';
-        if(!!opts.teamNumber) bs += opts.get('teamNumber').toString() + '/';
+        if(opts.eventCode) bs += opts.get('eventCode').toString() + '/';
+        if(opts.teamNumber) bs += opts.get('teamNumber').toString() + '/';
         this._request(bs, null, cb);
     }
     awardsList(cb) {
@@ -195,5 +194,10 @@ class Options {
         return this;
     };
 }
+
+// let api = new API({ username: sensitive.username, auth: sensitive.password, season: 2016 });
+// api.teamListing({ teamNumber: 484 }, (data) => {
+//     console.log(data);
+// });
 
 module.exports = API;

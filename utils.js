@@ -1,36 +1,12 @@
 'use strict';
 
-// Object extend
-
-// let a = { foo: 'bar' };
-// let b = { baz: 'qux' };
-// let c = a.extend(b);
-
-// c => { foo: 'bar', baz: 'qux' };
-
-// Object.defineProperty(Object.prototype, 'extend', {
-//     enumerable: false,
-//     value: function(from) {
-//         var props = Object.getOwnPropertyNames(from);
-//         var dest = this;
-//         props.forEach(function(name) {
-//             if(name in dest) {
-//                 var destination = Object.getOwnPropertyDescriptor(from, name);
-//                 Object.defineProperty(dest, name, destination);
-//             }
-//         });
-//         return this;
-//     }
-// });
-
 Object.prototype.extend = function(obj, override) {
+    let ocpy = Object.create(this);
     for(let k of Object.keys(obj)) {
-        if(!this[k] || override) this[k] = obj[k];
+        if(!ocpy[k] || override) ocpy[k] = obj[k];
     }
-    return this;
+    return ocpy;
 };
-
-// OBJECT REQUIREMENTS
 
 Object.prototype.filter = function(cb) {
     let nobj = {};

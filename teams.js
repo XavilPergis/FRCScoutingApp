@@ -119,8 +119,7 @@ class Team {
             }, (data) => {
                 // console.log(data);
                 for(let t of data.teams) {
-                    // FIXME: AH!!! EVERYONE IS RED.
-                    let team = new Team(t.nameShort, t.teamNumber, 'red');
+                    let team = new Team(t.nameShort, t.teamNumber);
                     // console.log(team);
                     Team._cached.push(team);
                 }

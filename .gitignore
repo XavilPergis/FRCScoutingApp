@@ -54,3 +54,5 @@ build
 
 # A bunch of sensitive data :)
 sensitive*
+
+assets

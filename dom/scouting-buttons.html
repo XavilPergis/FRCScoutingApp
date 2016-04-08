@@ -1,11 +1,59 @@
-<dom-module id="scouting-buttons">
-  <template>
-
-  </template>
-  <style is="custom-style"></style>
-  <script>
-    Polymer({
-      is: 'scouting-buttons'
-    });
-  </script>
+<dom-module id="scouting-button">
+    <template>
+        <div class="wrapper">
+            <paper-card class="actioncard">
+                <div class="card-content">
+                    <span>{{name}}</span>: <span>{{val}}</span>
+                </div>
+                <div class="card-actions">
+                    <paper-icon-button icon="add" on-tap="increaseAction"></paper-icon-button>
+                    <paper-icon-button icon="remove" on-tap="decreaseAction"></paper-icon-button>
+                </div>
+                <div id="prog" class="solid"></div>
+            </paper-card>
+        </div>
+    </template>
+    <style is="custom-style">
+        .card-actions {
+            display: flex;
+            flex-wrap: nowrap;
+        }
+        paper-card {
+            width: 100%;
+        }
+        .wrapper {
+            width: 100%;
+            display: flex;
+            flex-wrap: nowrap;
+        }
+        .solid {
+            background-color: var(--paper-light-blue-500);
+            position: relative;
+            height: 8px;
+            bottom: 0;
+        }
+    </style>
+    <script>
+        Polymer({
+            is: 'scouting-button',
+            ready: function() {
+                let c = Object.assign({}, this.data);
+                this.$['prog'].style.width = `0`;
+                this.name = c.name;
+                this.id = c.id;
+                this.val = c.val;
+            },
+            increaseAction: function(e) {
+                this.val++;
+                window.maxValue = this.val > window.maxValue ? this.val : window.maxValue;
+                this.$['prog'].style.width = `${(100 / window.maxValue) * this.val}%`;
+                window.wsc.emit('value', `${this.id}::add`);
+            },
+            decreaseAction: function(e) {
+                this.val--;
+                this.$['prog'].style.width = `${(100 / window.maxValue) * this.val}%`;
+                window.wsc.emit('value', `${this.id}::rem`);
+            }
+        });
+    </script>
 </dom-module>

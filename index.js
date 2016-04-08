@@ -20,19 +20,108 @@ var globals = require('./globals');
 globals.env['FRC_API'] = new FRCAPI({ username: sensitive.username, auth: sensitive.password, season: 2016 });
 globals.env['EVENT_CODE'] = 'PAWCH';
 
-let fapi = process.env['FRC_API'];
+// name: String,
+// number: Number,
+// comments: [String],
+
+var categories = [{
+    id: 'auto_highGoalsScored',
+    name: 'High Goals Scored',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'auto_highGoalsMissed',
+    name: 'High Goals Missed',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'auto_lowGoalsScored',
+    name: 'Low Goals Scored',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'auto_lowGoalsMissed',
+    name: 'Low Goals Missed',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'auto_roughTerrain',
+    name: 'Rough Terrain',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'auto_moat',
+    name: 'Moat',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'auto_sallyDoor',
+    name: 'Sally Door',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'auto_lowBar',
+    name: 'Lowbar',
+    mode: 'auto',
+    val: 0
+}, {
+    id: 'tele_highGoalsScored',
+    name: 'High Goals Scored',
+    mode: 'tele',
+    val: 0
+}, {
+    id: 'tele_highGoalsMissed',
+    name: 'High Goals Missed',
+    mode: 'tele',
+    val: 0
+}, {
+    id: 'tele_lowGoalsScored',
+    name: 'Low Goals Scored',
+    mode: 'tele',
+    val: 0
+}, {
+    id: 'tele_lowGoalsMissed',
+    name: 'Low Goals Missed',
+    mode: 'tele',
+    val: 0
+}, {
+    id: 'tele_roughTerrain',
+    name: 'Rough Terrain',
+    mode: 'tele',
+    val: 0
+}, {
+    id: 'tele_moat',
+    name: 'Moat',
+    mode: 'tele',
+    val: 0
+}, {
+    id: 'tele_sallyDoor',
+    name: 'Sally Door',
+    mode: 'tele',
+    val: 0
+}, {
+    id: 'tele_lowBar',
+    name: 'Lowbar',
+    mode: 'tele',
+    val: 0
+}];
+
+let fapi = globals.env['FRC_API'];
 let timetable = {};
 let teamlist = [];
 
 var scheduleRef = {};
 
 // MATCH LENGTH IS 150 SECONDS
+// Team.getAllTeams((tl) => {
+//     teamlist = tl;
+// });
 
 fapi.schedule({
-    eventCode: 'PAWCH',
+    eventCode: globals.env['EVENT_CODE'],
     tournamentLevel: 'qual'
 }, (data) => {
-    console.log(data);
+    // console.log(data);
     scheduleRef = data;
     let _teamtable = {};
     for(let val of data.Schedule) {
@@ -41,7 +130,10 @@ fapi.schedule({
             _teamtable[_val.teamNumber.toString()] = true;
     }
     for(let v in _teamtable) if(_teamtable.hasOwnProperty(v)) {
-        teamlist.push(v);
+        fapi.teamListing({ teamNumber: v }, (tdata) => {
+            teamlist.push(new Team(tdata.teams[0].teamNumber, tdata.teams[0].nameShort));
+            // console.log(teamlist);
+        });
     }
 });
 
@@ -177,10 +269,10 @@ class WebSocketServer {
         // SERVER INIT ---------------------------------------------------------
         // Create a server if none is provided
         if(!wss) wss = new ws.Server({
-            host: opts.host || 'localhost',
-            port: opts.port || '3000'
+            host: opts.host,
+            port: opts.port || 3000
         }, () => {
-            if(opts.logger_enabled) console.log('WS\tServer Started');
+            if(opts.logger_enabled) console.log(`WS\tServer Started on port ${opts.port||3000}`);
         });
 
         // SERVER PROTOTYPES ---------------------------------------------------
@@ -195,7 +287,8 @@ class WebSocketServer {
             ws._emit = function(chan, data) {
                 let _data = data ? `::${data}` : '::__NODATA';
                 if(opts.logger_enabled) console.log(`WS <--\t${chan}\t${data}`);
-                ws.send(`${chan}${_data}`);
+                if(ws.readyState == ws.OPEN) ws.send(`${chan}${_data}`);
+                else console.error('WS\tSOCKET NOT OPEN');
             }
 
             ws._lastKeepAlive = -1;
@@ -208,19 +301,28 @@ class WebSocketServer {
                     ch.cb(parts, ws, raw);
             });
             ws.on('close', (code, message) => {
-                console.log(code, message);
+                console.log(`WS\tCLOSED\t${code}\t${message}`);
+                clearInterval(this._kahl);
+                ws._team.free();
             });
 
             this.on('ka', (parts, ws, raw) => {
                 let tn = Number(parts[0]);
+                ws._alive = true;
             });
             // Keepalive every ten seconds
-            setInterval(() => {
+            this._kahl = setInterval(() => {
                 ws._emit('ka');
-                ws._lastKeepAlive = Date.now();
+                ws._alive = false;
                 // Four seconds for a timeout
                 setTimeout(() => {
-
+                    if(!ws._alive) {
+                        console.log(`WS\tTIMEOUT`);
+                        ws.close();
+                        clearInterval(this._kahl);
+                        ws._team.free();
+                        console.log('Freed team ' + ws._team.name);
+                    }
                 }, 4000);
             }, 10000);
         });
@@ -247,21 +349,38 @@ wss.on('auth', (parts, ws, raw) => {
     } else ws._emit('auth');
 });
 wss.on('team', (parts, ws, raw) => {
-    ws._emit('team', getRandomTeam());
+    let rt = Team.getRandom();
+    ws._team = rt;
+    ws._emit('team', `${rt.name}::${rt.number}`);
 });
 wss.on('match', (parts, ws, raw) => {
     // May be a bit buggy due to asyncronisity...
     let foo = getCurrentRound(scheduleRef, timetable);
     ws._emit('match', JSON.stringify(foo));
 });
-wss.on('ping', (parts, ws) => {
-
+wss.on('categories', (parts, ws) => {
+    ws._emit('categories', JSON.stringify(categories));
+});
+wss.on('value', (parts, ws) => {
+    console.log(parts[0], parts[1]);
+    if(parts[1] == 'add')
+        categories.filter(v => v.id == parts[0])[0].val += 1;
+    if(parts[1] == 'rem')
+        categories.filter(v => v.id == parts[0])[0].val -= 1;
+    console.log(categories);
 });
 
 setInterval(() => {
     // Simple session management
     for(let k in sessions) if(sessions[k].valueOf() >= Date.now()) delete sessions[k];
+    // for(let v of valQueue) {
+    //
+    // }
 }, 1000);
+
+// setInterval(() => {
+//
+// }, 10000);
 
 // Track crossings
 // Defenses:

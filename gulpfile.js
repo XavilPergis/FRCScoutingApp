@@ -13,7 +13,13 @@ gulp.task('babel', () => {
         .pipe(gulp.dest('build/babel'));
 });
 
-gulp.task('serve', () => {
+gulp.task('less', () => {
+    gulp.src(['css/**.less'])
+        .pipe(less())
+        .pipe(gulp.dest('build/css'));
+});
+
+gulp.task('serve', ['babel', 'less'], () => {
     let node = null;
     let server = () => {
         if(node) node.kill();

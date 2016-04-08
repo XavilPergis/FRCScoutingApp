@@ -1,10 +1,14 @@
 'use strict';
 
 const mongoose = require('mongoose');
+const Team = require('./teams');
+const globals = require('./globals');
 const Schema = mongoose.Schema;
 var db = mongoose.connection;
 
 mongoose.connect('mongodb://localhost:3001');
+
+let _api = globals.env['FRC_API'];
 
 var TeamSchema = new Schema({
     name: String,
@@ -32,24 +36,30 @@ var TeamSchema = new Schema({
     }
 });
 
-var Team = mongoose.model('team', TeamSchema);
+var DBTeam = mongoose.model('team', TeamSchema);
 
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', () => {
     console.log('Connected');
-    let foo = new Team({name: 'Roboforce', number: 484});
-    foo.save((err, foo) => {
-        if(err) return console.error(err);
-        console.log(foo);
+    _api.teamListing({ eventCode: 'PAWCH' }, (data) => {
+        for(let t of data) {
+            console.log(t);
+        }
     });
-    // Get all in Schema
-    Team.find((err, teams) => {
-        if(err) return console.error(err);
-        console.log(teams);
-    });
-    // Query
-    Team.find({ number: 484 }, (err, team) => {
-        if(err) return console.error(err);
-        console.log(team);
-    });
+    // let foo = new DBTeam({ name: 'Roboforce', number: 484 });
+    // foo.save((err, foo) => {
+    //     if(err) return console.error(err);
+    //     console.log(foo);
+    // });
+    //
+    // DBTeam.find({ number: 484 }, (err, teams) => {
+    //     if(err) return console.error(err);
+    //     console.log(teams);
+    // });
+    // // Query
+    // DBTeam.update({ number: 484 }, {
+    //
+    // });
 });
+
+// mongod --dbpath ./data/db

@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title class="content-bind" bind="title"></title>
+        <title>FRC Scouting</title>
 
         <!-- Mobile -->
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -28,11 +28,13 @@
         <link rel="import" href="bower_components/paper-dialog/paper-dialog.html">
         <link rel="import" href="bower_components/paper-input/paper-input.html">
         <link rel="import" href="bower_components/paper-button/paper-button.html">
+        <link rel="import" href="bower_components/paper-card/paper-card.html">
         <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
         <link rel="import" href="bower_components/iron-icons/iron-icons.html">
         <link rel="import" href="bower_components/iron-pages/iron-pages.html">
         <link rel="import" href="bower_components/paper-styles/default-theme.html">
         <link rel="import" href="bower_components/paper-styles/color.html">
+        <link rel="import" href="bower_components/paper-styles/typography.html">
 
         <!-- Custom DOM Modules -->
         <link rel="import" href="dom/team-toolbar.html">
@@ -66,12 +68,28 @@
                     color: white;
                 }
             }
+            #header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 85%;
+                z-index: 10000;
+            }
+            #contentwrapper {
+                position: absolute;
+                top: 15%;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                overflow-y: scroll;
+            }
             #toolbar paper-toolbar {
                 background-color: var(--paper-light-blue-500);
             }
             #toolbar paper-button {
                 display: inline-block;
-                height: 55px;
+                /*height: 55px;*/
                 padding: 5px;
             }
             #toolbar paper-dialog {
@@ -105,29 +123,58 @@
                 height: auto;
                 align-self: flex-end;
             }
+            #mp {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 10px;
+            }
+            .buttonwrapper {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-around;
+            }
+            .buttonwrapper scouting-button {
+                margin: 20px;
+                width: 100%;
+            }
         </style>
     </head>
     <body>
-        <auth-modal id="login-modal"></auth-modal>
-        <team-toolbar></team-toolbar>
         <template is="dom-bind" id="scope">
-            <div class="content">
+            <auth-modal id="login-modal"></auth-modal>
+            <div id="header">
+                <team-toolbar></team-toolbar>
                 <paper-tabs autoselect selected="{{selected}}">
                     <paper-tab>Scouting</paper-tab>
                     <paper-tab>Data</paper-tab>
                 </paper-tabs>
             </div>
-            <iron-pages selected="{{selected}}">
-                <div class="">
-                    <match-progress></match-progress>
-                    foo
-                </div>
-                <div class="">
-                    bar
-                </div>
-            </iron-pages>
+            <div id="contentwrapper">
+                <iron-pages selected="{{selected}}">
+                    <div id="scoutingpage">
+                        <div class="buttonwrapper">
+                            <template id="btns" is="dom-repeat" items="{{categories}}" index-as="index">
+                                <scouting-button data="{{item}}"></scouting-button>
+                            </template>
+                        </div>
+                        <match-progress id="mp"></match-progress>
+                    </div>
+                    <div class="">
+                        bar
+                    </div>
+                </iron-pages>
+            </div>
         </template>
         <match-display></match-display>
-        <scouting-buttons></scouting-buttons>
+        <script>
+            window.maxValue = 20;
+            window.wsc.emit('categories');
+            window.wsc.on('categories', (parts, ws) => {
+                let c = JSON.parse(parts[0]);
+                document.querySelector('#scope').categories = c.filter(v => v.mode == 'auto');
+            });
+        </script>
     </body>
 </html>

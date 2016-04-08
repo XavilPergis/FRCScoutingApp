@@ -83,12 +83,12 @@
         ready: function() {
             window.wsc.emit('team');
             window.wsc.on('team', (parts, ws, raw) => {
-                console.log(parts);
-                if(parts[0] !== '__NODATA') this.team = 'Team ' + parts[0];
+                if(parts[1] !== '__NODATA') this.team = 'Team ' + parts[1] + ': ' + parts[0];
                 else {
                     this.team = 'No Team'
                     this.$['notif0'].open();
                 }
+                window.team = parts[1];
             });
         }
     });
